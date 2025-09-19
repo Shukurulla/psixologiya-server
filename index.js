@@ -9,6 +9,7 @@ import testRoutes from "./routes/tests.js";
 import adminRoutes from "./routes/admin.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 import { initializeTests } from "./utils/initializeTests.js";
+import Student from "./models/Student.js";
 
 // Uncomment this line once to sync HEMIS data, then comment it back
 // import { refreshHemisData } from "./utils/refreshData.js";
@@ -47,7 +48,6 @@ const startServer = async () => {
     await initializeTests();
 
     // Uncomment this line once to sync HEMIS data, then comment it back
-    // await refreshHemisData();
 
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);

@@ -410,6 +410,7 @@ router.get("/test-results", protect, adminOnly, async (req, res) => {
       needsAttention,
       startDate,
       endDate,
+      search,
       page = 1,
       limit = 50,
     } = req.query;
@@ -431,6 +432,8 @@ router.get("/test-results", protect, adminOnly, async (req, res) => {
     if (needsAttention === "true") {
       query.needsAttention = true;
       query.isReviewed = false;
+    } else if (needsAttention === "false") {
+      query.needsAttention = false;
     }
 
     if (startDate || endDate) {
@@ -443,9 +446,37 @@ router.get("/test-results", protect, adminOnly, async (req, res) => {
       }
     }
 
+    // Search by student name
+    if (search) {
+      const students = await Student.find({
+        $or: [
+          { full_name: { $regex: search, $options: "i" } },
+          { student_id_number: { $regex: search, $options: "i" } },
+        ],
+      }).distinct("_id");
+
+      if (students.length > 0) {
+        query.student = { $in: students };
+      } else {
+        // If no students found with search term, return empty results
+        return res.json({
+          success: true,
+          data: {
+            results: [],
+            pagination: {
+              total: 0,
+              page: parseInt(page),
+              pages: 0,
+            },
+          },
+        });
+      }
+    }
+
     const results = await TestResult.find(query)
       .populate("student", "full_name student_id_number department group")
       .populate("test", "name code isSensitive")
+      .populate("reviewedBy", "fullName")
       .limit(limit * 1)
       .skip((page - 1) * limit)
       .sort("-completedAt");
